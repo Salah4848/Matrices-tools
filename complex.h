@@ -12,6 +12,8 @@ public:
     double Im() const{return y;}
 
     //Operations
+    bool operator==(complex const&) const;
+    bool operator!=(complex const&) const;
     complex& operator+=(complex const&);
     complex& operator-=(complex const&);
     complex& operator*=(complex const&);

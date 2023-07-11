@@ -31,16 +31,20 @@ Matrix Matrix::operator*(Matrix const& other) const{
     return Matrix(result);
 }
 
-bool Matrix::operator==(Matrix const& other){
-    bool b(true);
+bool Matrix::operator==(Matrix const& other) const{
     size_t m(matrix.size());
     size_t n(matrix[0].size());
+    if(other.matrix.size()!=m or other.matrix[0].size()!=n) return false;
     for(size_t i(0); i<n; ++i){
         for(size_t j(0); j<n; ++j){
-            if 
+            if(matrix[i][j]!=other.matrix[i][j]) return false;
         }
     }
+    return true;
+}
 
+bool Matrix::operator!=(Matrix const& other) const{
+    return not(*this==other);
 }
 
 Matrix Matrix::operator+(Matrix const& other) const{
@@ -123,7 +127,7 @@ Matrix Matrix::operator~() const{
 } 
 
 bool Matrix::is_hermitian() const{
-    return 
+    return *this==(~*this);
 }
 
 //External

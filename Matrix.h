@@ -15,7 +15,8 @@ public:
     size_t numCols() const{return matrix[0].size();}
 
     //operations
-    Matrix operator==(Matrix const&) const;
+    bool operator==(Matrix const&) const;
+    bool operator!=(Matrix const&) const;
     Matrix operator*(Matrix const&) const;
     Matrix operator+(Matrix const&) const;
     Matrix operator-() const;
@@ -28,7 +29,7 @@ public:
     //Methods
     Matrix transpose() const;
     Matrix conjugate() const;
-    Matrix operator~() const; //return conjugate
+    Matrix operator~() const; //returns conjugate of transpose : M*
     bool is_hermitian() const;
 };
 

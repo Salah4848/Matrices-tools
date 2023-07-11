@@ -2,6 +2,14 @@
 
 complex::complex(double x, double y) : x(x), y(y){}
 
+bool complex::operator==(complex const& other) const{
+    return x==other.x and y==other.y;
+}
+
+bool complex::operator!=(complex const& other) const{
+    return not(*this==other);
+}
+
 complex& complex::operator*=(complex const& other){
     x = x*other.x - y*other.y;
     y = x*other.y + y*other.x;
