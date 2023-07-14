@@ -28,6 +28,36 @@ Matrix<T> Matrix<T>::column(size_t i) const{
 }
 
 template<typename T>
+void Matrix<T>::row(size_t index, Matrix const& M){
+    std::vector<std::vector<T>> result;
+    size_t n(numRows());
+    for(size_t i(0); i<n; ++i){
+        if(i==index){
+            for(auto const& r : M.matrix){
+                result.push_back(r);
+            }
+        }
+        else result.push_back(matrix[i]);
+        }
+    Matrix<T> temp(result);
+    *this=temp;
+}
+
+template<typename T>
+void Matrix<T>::column(size_t index, Matrix const& N){
+    std::vector<std::vector<T>> result;
+    *this = this->transpose();
+    Matrix<T> M(N.transpose());
+    row(index, M);
+    *this = this->transpose();
+}
+
+template<typename T>
+T Matrix<T>::loc(size_t i, size_t j) const{
+    return matrix[i][j];
+}
+
+template<typename T>
 Matrix<T> Matrix<T>::operator*(Matrix<T> const& other) const{
     if(matrix[0].size()!=other.matrix.size()) throw "Impossible operation";
     size_t m(matrix.size());
@@ -183,19 +213,30 @@ bool Matrix<T>::is_hermitian() const{
 }
 
 template<typename T>
-Matrix<T> Matrix<T>::orthonormal_base() const{
+Matrix<T> Matrix<T>::gauss_elimination() const{
     size_t m(numRows());
-    size_T n(numCols())
-    Matrix<T> result(n,m,myZero());
-    Matrix<T> tempcol(m,1,myZero());
-    //I have to do gauss before.
-    for(size_t i(0); i<n; ++i){
-        result.matrix[i]= column(i).transpose().matrix[0];
-        tempcol = column(i);
-        for(size_t k(0); k<i; ++k){
-            result.matrix[i] = (result.row(i).transpose() - ())
+    size_t n(numCols());
+    Matrix<T> result(*this);
+    size_t i(0);
+    std::vector<size_t> unused_rows(m);
+    std::iota(unused_rows.begin(), unused_rows.end(), 0);
+    for(size_t j(0); j<n; ++j ){
+        i=unused_rows.size() +1;
+        for(size_t l(0); l<unused_rows.size(); ++l){
+            if(not(result.matrix[unused_rows[l]][j]==myZero())){
+                i=l;
+                break;
+            }
+        }
+        if(i<unused_rows.size()){
+            for(size_t k(i+1); k<unused_rows.size(); ++k){
+                result.row(unused_rows[k], result.row(unused_rows[k])-(result.matrix[unused_rows[k]][j]/result.matrix[unused_rows[i]][j])*result.row(unused_rows[i]));
+            }
+            auto it = std::remove(unused_rows.begin(), unused_rows.end(), unused_rows[i]);
+            unused_rows.erase(it, unused_rows.end());
         }
     }
+    return result;
 }
 
 //External

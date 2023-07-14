@@ -3,6 +3,8 @@
 #include <vector>
 #include <iomanip>
 #include <iostream>
+#include <numeric>
+#include <algorithm>
 
 template<typename T>
 class Matrix{
@@ -12,11 +14,14 @@ public:
     Matrix(std::vector<std::vector<T>> matrix);
     Matrix(std::size_t m, std::size_t n, T value);
 
-    //Getters
+    //Getters and Setters
     size_t numRows() const{return matrix.size();}
     size_t numCols() const{return matrix[0].size();}
     Matrix row(size_t index) const;
     Matrix column(size_t index) const;
+    void row(size_t index, Matrix const&); //Replaces the indexed row with input matrix (extends matrix with zeros if size differs)
+    void column(size_t index, Matrix const&); //Replaces the indexed column with input matrix if possible (extends matrix with zeros if size differs)
+    T loc(size_t i, size_t j) const; //returns the indexed element
 
     //operations
     bool operator==(Matrix const&) const;
@@ -36,8 +41,9 @@ public:
     Matrix conjugate() const;
     Matrix operator~() const; //returns conjugate of transpose : M*
     bool is_hermitian() const;
-    Matrix orthonormal_base() const; //Uses Gram-Schmidt to find orthonormal base for the columns of M, works only if mySqrt(T) is defined
-    Matrix SVD(Matrix& P, Matrix& Q) const; //returns the diagonal matrix D of singular values of M. Modifies P and Q such that : M=PDQ. Works only if orthonormal_base() works.
+    Matrix gauss_elimination() const; //Uses gauss elemination on M.
+    //Matrix orthonormal_base() const; //Uses Gram-Schmidt to find orthonormal base for the columns of M, works only if mySqrt(T) is defined
+    //Matrix SVD(Matrix& P, Matrix& Q) const; //returns the diagonal matrix D of singular values of M. Modifies P and Q such that : M=PDQ. Works only if orthonormal_base() works.
 
 };
 
