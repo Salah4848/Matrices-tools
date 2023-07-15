@@ -23,5 +23,20 @@ std::complex<double> myZero(){
 }
 
 std::complex<double> operator~(std::complex<double> const& c){
-    return std::complex<double>(c.real(),-c.imag());
+    return std::complex<double>(c.real(),-(c.imag()));
+}
+
+std::complex<double> myInverse(std::complex<double> const& c){
+    if(isZero(c)) throw "Division by zero";
+    std::complex<double> one(1,0);
+    return one/c;
+}
+
+bool isZero(std::complex<double> const& c){
+    if(c.real()*c.real()+c.imag()*c.imag()<1e-12) return true;
+    return false;
+}
+
+std::complex<double> mySqrt(std::complex<double> const& c){
+    return std::complex<double> (std::sqrt(std::abs(c)), 0);
 }

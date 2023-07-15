@@ -1,5 +1,6 @@
 #pragma once
 
+#include <complex>
 #include <vector>
 #include <iomanip>
 #include <iostream>
@@ -12,6 +13,7 @@ private:
     std::vector<std::vector<T>> matrix;
 public:
     Matrix(std::vector<std::vector<T>> matrix);
+    Matrix(std::initializer_list<std::initializer_list<T>> matrix);
     Matrix(std::size_t m, std::size_t n, T value);
 
     //Getters and Setters
@@ -41,8 +43,9 @@ public:
     Matrix conjugate() const;
     Matrix operator~() const; //returns conjugate of transpose : M*
     bool is_hermitian() const;
-    Matrix gauss_elimination() const; //Uses gauss elemination on M.
-    //Matrix orthonormal_base() const; //Uses Gram-Schmidt to find orthonormal base for the columns of M, works only if mySqrt(T) is defined
+    //All the following methods need type T to define a field
+    Matrix gauss_elimination(bool clear_null_lines=false) const; //Uses gauss elemination on M. need '/' defined.
+    Matrix orthogonal_base(bool normalize=true) const; //Uses Gram-Schmidt to find orthonormal base for the columns of M, works only if gauss_elimination works, normalization only if MySqrt is defined
     //Matrix SVD(Matrix& P, Matrix& Q) const; //returns the diagonal matrix D of singular values of M. Modifies P and Q such that : M=PDQ. Works only if orthonormal_base() works.
 
 };
@@ -54,5 +57,8 @@ Matrix<T> operator*(T const&, Matrix<T> const&);
 
 template<typename T>
 std::ostream& operator<<(std::ostream&, Matrix<T> const&);
+
+template<typename T>
+Matrix<std::complex<T>> operator*(T const& scalar, Matrix<std::complex<T>> const& matrix);
 
 #include "Matrix.tpp"

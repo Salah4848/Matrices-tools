@@ -1,3 +1,4 @@
 -Looks into namespaces for my overloads.h.
 -Add A gram-schmidt function for orthonormalisation.
 -Add gauss (to use in Gram-Schmidt).
+-Overload [].
