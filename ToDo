@@ -2,3 +2,4 @@
 -Add A gram-schmidt function for orthonormalisation.
 -Add gauss (to use in Gram-Schmidt).
 -Overload [].
+-Look into parallele computing for performance?

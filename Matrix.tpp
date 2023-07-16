@@ -120,7 +120,7 @@ Matrix<T> Matrix<T>::operator-() const{
     std::vector<std::vector<T>> result(matrix.size(), std::vector<T> (matrix[0].size(),myZero()));
     for(size_t i(0); i<matrix.size(); ++i){
         for(size_t j(0); j<matrix[0].size(); ++j){
-            result[i][j]=-matrix[i][j];
+            result[i][j]=myZero()-matrix[i][j];
         }
     }
     return result;
@@ -186,6 +186,15 @@ void Matrix<T>::print(std::ostream& out) const{
 }
 
 template<typename T>
+Matrix<T> Matrix<T>::identity(size_t n){
+    Matrix<T> result(n,n,myZero());
+    for(size_t i(0); i<n; ++i){
+        result.matrix[i][i]=myUnit();
+    }
+    return result;
+}
+
+template<typename T>
 Matrix<T> Matrix<T>::transpose() const{
     size_t m(matrix.size());
     size_t n(matrix[0].size());
@@ -222,7 +231,7 @@ bool Matrix<T>::is_hermitian() const{
 }
 
 template<typename T>
-Matrix<T> Matrix<T>::gauss_elimination(bool clear_null_lines) const{
+Matrix<T> Matrix<T>::gauss_elimination(bool clear_null_lines, bool complete_gaussification, std::vector<size_t>* ref_points) const{
     size_t m(numRows());
     size_t n(numCols());
     Matrix<T> result(*this);
@@ -236,6 +245,7 @@ Matrix<T> Matrix<T>::gauss_elimination(bool clear_null_lines) const{
         for(size_t l(start); l<m; ++l){
             if(not(isZero(result.matrix[l][j]))){
                 i=l;
+                if(ref_points!=nullptr) ref_points->push_back(j);
                 break;
             }
         }
@@ -244,6 +254,13 @@ Matrix<T> Matrix<T>::gauss_elimination(bool clear_null_lines) const{
             for(size_t k(i+1); k<m; ++k){
                 temp = result.row(i);
                 result.row(k, result.row(k)-(result.matrix[k][j]*myInverse(result.matrix[i][j]))*temp);
+            }
+            if(complete_gaussification){
+                for(size_t k(0); k<i; ++k){
+                    result.row(k, result.row(k)-(result.matrix[k][j]*myInverse(result.matrix[i][j]))*temp);
+                }
+                temp = myInverse(result.matrix[i][j])*temp;
+                result.row(i,temp);
             }
             result.row(i, result.row(start));
             result.row(start, temp);
@@ -274,6 +291,53 @@ Matrix<T> Matrix<T>::orthogonal_base(bool normalize) const{
         }
     }
     return result.transpose();
+}
+
+template<typename T>
+T Matrix<T>::determinant() const{
+    if(numRows()!=numCols()) throw "Matrix must be square";
+    size_t n(numRows());
+    T det(myZero());
+    for(size_t i(0); i<n; ++i){
+        if(i==0) det=matrix[i][i];
+        else det = det*matrix[i][i];
+    }
+    return det;
+}
+
+template<typename T>
+Matrix<T> Matrix<T>::kernel() const{
+    std::vector<size_t> ref_points;
+    Matrix<T> G(gauss_elimination(false, true, &ref_points));
+    if(ref_points.size()==0) return identity(numCols());
+    size_t n(numCols());
+    size_t start;
+    size_t end;
+    Matrix<T> K(n,n-ref_points.size(),myZero());
+    size_t index(0);
+    for(size_t r(0); r<ref_points.size(); ++r){
+        start = ref_points[r];
+        if(r+1 == ref_points.size()) end=n;
+        else end = ref_points[r+1];
+        if(r==0){
+            for(size_t i(0); i<ref_points[r]; ++i){
+                K.column(index, G.column(i));
+                K.matrix[i][index]= myUnit();
+                index+=1;
+            }
+        }
+        for(size_t i(start+1); i<end; ++i){
+            K.column(index, -G.column(i));
+            K.matrix[i][index]= myUnit();
+            index+=1;
+        }
+    }
+    return K;
+}
+
+template<typename T>
+Matrix<T> Matrix<T>::image() const{
+    return orthogonal_base(false);
 }
 
 //External

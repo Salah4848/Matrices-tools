@@ -8,7 +8,7 @@
 #include <algorithm>
 
 template<typename T>
-class Matrix{
+class Matrix{ //We will call the matrix of the current instance M
 private:
     std::vector<std::vector<T>> matrix;
 public:
@@ -39,13 +39,17 @@ public:
 
     //Methods
     void print(std::ostream&) const; //Wroks only if myTo_string(T) is defined
+    static Matrix identity(size_t n); // returns identity matrix of size numRows()
     Matrix transpose() const;
     Matrix conjugate() const;
     Matrix operator~() const; //returns conjugate of transpose : M*
     bool is_hermitian() const;
-    //All the following methods need type T to define a field
-    Matrix gauss_elimination(bool clear_null_lines=false) const; //Uses gauss elemination on M. need '/' defined.
+    //All the following methods need type T to define the complex or real fields
+    Matrix gauss_elimination(bool clear_null_lines=false, bool complete_gaussification = false, std::vector<size_t>* ref_points = nullptr) const; //Uses gauss elemination on M. need '/' defined.
     Matrix orthogonal_base(bool normalize=true) const; //Uses Gram-Schmidt to find orthonormal base for the columns of M, works only if gauss_elimination works, normalization only if MySqrt is defined
+    T determinant() const; //Requires gauss elimination
+    Matrix kernel() const; //Returns matrix with columns that form a base for the kernel of M
+    Matrix image() const; //Retruns matrix forming base of Im(M)
     //Matrix SVD(Matrix& P, Matrix& Q) const; //returns the diagonal matrix D of singular values of M. Modifies P and Q such that : M=PDQ. Works only if orthonormal_base() works.
 
 };

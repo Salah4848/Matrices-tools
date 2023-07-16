@@ -9,7 +9,7 @@ std::string myTo_string(const std::complex<double>& c) {
     if (realPart!=0 or imagPart==0) oss << c.real();
 
     if (imagPart!=0){
-        if (imagPart >= 0) {
+        if (imagPart >= 0 and realPart!=0) {
             oss << "+";
         }
 
@@ -39,4 +39,8 @@ bool isZero(std::complex<double> const& c){
 
 std::complex<double> mySqrt(std::complex<double> const& c){
     return std::complex<double> (std::sqrt(std::abs(c)), 0);
+}
+
+std::complex<double> myUnit(){
+    return std::complex<double>(1,0);
 }
