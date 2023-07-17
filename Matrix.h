@@ -21,9 +21,11 @@ public:
     size_t numCols() const{return matrix[0].size();}
     Matrix row(size_t index) const;
     Matrix column(size_t index) const;
-    void row(size_t index, Matrix const&); //Replaces the indexed row with input matrix (extends matrix with zeros if size differs)
-    void column(size_t index, Matrix const&); //Replaces the indexed column with input matrix if possible (extends matrix with zeros if size differs)
-    T loc(size_t i, size_t j) const; //returns the indexed element
+    Matrix& row(size_t index, Matrix const&); //Replaces the indexed row with input matrix (extends matrix with zeros if size differs)
+    Matrix& column(size_t index, Matrix const&); //Replaces the indexed column with input matrix if possible (extends matrix with zeros if size differs)
+    T loc(size_t i, size_t j) const;
+    Matrix& addRow(Matrix const&);
+    Matrix& addColumn(Matrix const&);
 
     //operations
     bool operator==(Matrix const&) const;
@@ -38,7 +40,7 @@ public:
     Matrix scale(T const&);
 
     //Methods
-    void print(std::ostream&) const; //Wroks only if myTo_string(T) is defined
+    void print(std::ostream&) const; //Works only if myTo_string(T) is defined
     static Matrix identity(size_t n); // returns identity matrix of size numRows()
     Matrix transpose() const;
     Matrix conjugate() const;

@@ -25,6 +25,8 @@ Matrix<T>::Matrix(std::initializer_list<std::initializer_list<T>> matrix_){
 template<typename T>
 Matrix<T>::Matrix(size_t m, size_t n, T value) : matrix(std::vector<std::vector<T>>(m, std::vector<T> (n,value))){}
 
+//Getters and Setters ===================================================
+
 template<typename T>
 Matrix<T> Matrix<T>::row(size_t i) const{
     return Matrix<T>({matrix[i]});
@@ -37,7 +39,7 @@ Matrix<T> Matrix<T>::column(size_t i) const{
 }
 
 template<typename T>
-void Matrix<T>::row(size_t index, Matrix const& M){
+Matrix<T>& Matrix<T>::row(size_t index, Matrix const& M){
     std::vector<std::vector<T>> result;
     size_t n(numRows());
     for(size_t i(0); i<n; ++i){
@@ -50,21 +52,41 @@ void Matrix<T>::row(size_t index, Matrix const& M){
         }
     Matrix<T> temp(result);
     *this = temp;
+    return *this;
 }
 
 template<typename T>
-void Matrix<T>::column(size_t index, Matrix const& N){
+Matrix<T>& Matrix<T>::column(size_t index, Matrix const& N){
     std::vector<std::vector<T>> result;
     *this = this->transpose();
     Matrix<T> M(N.transpose());
     row(index, M);
     *this = this->transpose();
+    return *this;
 }
 
 template<typename T>
 T Matrix<T>::loc(size_t i, size_t j) const{
     return matrix[i][j];
 }
+
+template<typename T>
+Matrix<T>& Matrix<T>::addRow(Matrix<T> const& M){
+    size_t m(M.numRows());
+    for(size_t i(0); i<m; ++i){
+        matrix.push_back(M.matrix[i]);
+    }
+    *this = Matrix<T>(matrix); 
+    return *this;
+}
+
+template<typename T>
+Matrix<T>& Matrix<T>::addColumn(Matrix<T> const& M){
+    *this = this->transpose().addRow(M.transpose()).transpose();
+    return *this;
+}
+
+//Operations ========================================================
 
 template<typename T>
 Matrix<T> Matrix<T>::operator*(Matrix<T> const& other) const{
@@ -161,6 +183,8 @@ Matrix<T> Matrix<T>::scale(T const& c){
     }
     return result;
 }
+
+//Methods =================================================================
 
 template<typename T>
 void Matrix<T>::print(std::ostream& out) const{
