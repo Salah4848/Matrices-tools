@@ -5,14 +5,16 @@ std::string myTo_string(const std::complex<double>& c) {
 
     double realPart(c.real());
     double imagPart = c.imag();
+    if(isZero(c)){
+        return "0";
+    }
 
-    if (realPart!=0 or imagPart==0) oss << c.real();
+    if ((not(isZero(realPart))) or isZero(imagPart)) oss << c.real();
 
-    if (imagPart!=0){
-        if (imagPart >= 0 and realPart!=0) {
+    if (not(isZero(imagPart))){
+        if (imagPart >= 0 and (not(isZero(realPart)))) {
             oss << "+";
         }
-
         oss << imagPart << "i";
     }
     return oss.str();
@@ -27,13 +29,13 @@ std::complex<double> operator~(std::complex<double> const& c){
 }
 
 std::complex<double> myInverse(std::complex<double> const& c){
-    if(isZero(c)) throw "Division by zero";
+    if(isZero(c)) throw std::invalid_argument("Division by zero");
     std::complex<double> one(1,0);
     return one/c;
 }
 
 bool isZero(std::complex<double> const& c){
-    if(c.real()*c.real()+c.imag()*c.imag()<1e-12) return true;
+    if(c.real()*c.real()+c.imag()*c.imag()<1e-10) return true;
     return false;
 }
 

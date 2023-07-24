@@ -46,12 +46,19 @@ public:
     Matrix conjugate() const;
     Matrix operator~() const; //returns conjugate of transpose : M*
     bool is_hermitian() const;
+    //All the following methods need type T to define a field
+    Matrix gauss_elimination(bool clear_null_lines=false, bool complete_gaussification = false, std::vector<size_t>* ref_points = nullptr, Matrix* Mirror=nullptr) const; //Uses gauss elemination on M. need myInverse defined defined.
+    Matrix inverse() const; //Returns inverse of M if possible using gauss_eliminiation
     //All the following methods need type T to define the complex or real fields
-    Matrix gauss_elimination(bool clear_null_lines=false, bool complete_gaussification = false, std::vector<size_t>* ref_points = nullptr) const; //Uses gauss elemination on M. need '/' defined.
+    Matrix gram_schmidt(size_t start, size_t end, bool normalize=true) const; //Directly performs gram-schmidt algorithm on the columns from start index to end index
+    Matrix gram_schmidt(bool normalize=true) const; //Takes start as 0 and end as numCols.
     Matrix orthogonal_base(bool normalize=true) const; //Uses Gram-Schmidt to find orthonormal base for the columns of M, works only if gauss_elimination works, normalization only if MySqrt is defined
     T determinant() const; //Requires gauss elimination
     Matrix kernel() const; //Returns matrix with columns that form a base for the kernel of M
-    Matrix image() const; //Retruns matrix forming base of Im(M)
+    Matrix image() const; //Returns matrix forming base of Im(M)
+    Matrix complete_base() const; //Adds columns to M such that rank(M)=numcols
+    void QRD(Matrix& Q, Matrix& R) const; //Yields QR decomp of M, where is Q is unitary and R upper triangular
+    Matrix QR_algo() const; //Applies QR algorithm on M and returns final matrix
     //Matrix SVD(Matrix& P, Matrix& Q) const; //returns the diagonal matrix D of singular values of M. Modifies P and Q such that : M=PDQ. Works only if orthonormal_base() works.
 
 };

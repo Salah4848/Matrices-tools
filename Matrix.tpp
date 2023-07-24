@@ -29,11 +29,13 @@ Matrix<T>::Matrix(size_t m, size_t n, T value) : matrix(std::vector<std::vector<
 
 template<typename T>
 Matrix<T> Matrix<T>::row(size_t i) const{
+    if(i>=numRows()) throw std::invalid_argument("Row index out of range");
     return Matrix<T>({matrix[i]});
 }
 
 template<typename T>
 Matrix<T> Matrix<T>::column(size_t i) const{
+    if(i>=numCols()) throw std::invalid_argument("Column index out of range");
     Matrix<T> col({this->transpose().matrix[i]});
     return col.transpose();
 }
@@ -90,7 +92,7 @@ Matrix<T>& Matrix<T>::addColumn(Matrix<T> const& M){
 
 template<typename T>
 Matrix<T> Matrix<T>::operator*(Matrix<T> const& other) const{
-    if(matrix[0].size()!=other.matrix.size()) throw "Impossible operation";
+    if(matrix[0].size()!=other.matrix.size()) throw std::invalid_argument("Impossible operation");
     size_t m(matrix.size());
     size_t p(other.matrix.size());
     size_t n(other.matrix[0].size());
@@ -125,7 +127,7 @@ bool Matrix<T>::operator!=(Matrix<T> const& other) const{
 
 template<typename T>
 Matrix<T> Matrix<T>::operator+(Matrix<T> const& other) const{
-    if(matrix.size()!=other.matrix.size() or matrix[0].size()!=other.matrix[0].size()) throw "Impossible operation";
+    if(matrix.size()!=other.matrix.size() or matrix[0].size()!=other.matrix[0].size()) throw std::invalid_argument("Impossible operation");
     size_t m(matrix.size());
     size_t n(matrix[0].size());
     std::vector<std::vector<T>> result(m, std::vector<T> (n,myZero()));
@@ -255,11 +257,14 @@ bool Matrix<T>::is_hermitian() const{
 }
 
 template<typename T>
-Matrix<T> Matrix<T>::gauss_elimination(bool clear_null_lines, bool complete_gaussification, std::vector<size_t>* ref_points) const{
+Matrix<T> Matrix<T>::gauss_elimination(bool clear_null_lines, bool complete_gaussification, std::vector<size_t>* ref_points, Matrix<T>* Mirror) const{
+    bool valid(Mirror!=nullptr); //Performs operations that were performed on M on Mirror matrix too, can yield inverse if M is full rank
     size_t m(numRows());
     size_t n(numCols());
     Matrix<T> result(*this);
     Matrix<T> temp(1,1,myZero());
+    Matrix<T> tempMir(1,1,myZero());
+    T scalar(myZero());
     size_t i(0);
     size_t start(0);
     std::vector<size_t> unused_rows(m);
@@ -275,19 +280,31 @@ Matrix<T> Matrix<T>::gauss_elimination(bool clear_null_lines, bool complete_gaus
         }
         if(i<m){
             temp = result.row(i);
+            if(valid) tempMir= Mirror->row(i);
             for(size_t k(i+1); k<m; ++k){
                 temp = result.row(i);
-                result.row(k, result.row(k)-(result.matrix[k][j]*myInverse(result.matrix[i][j]))*temp);
+                scalar = result.matrix[k][j]*myInverse(result.matrix[i][j]);
+                result.row(k, result.row(k)-scalar*temp);
+                if(valid) Mirror->row(k, Mirror->row(k)-scalar*tempMir);
             }
             if(complete_gaussification){
                 for(size_t k(0); k<i; ++k){
-                    result.row(k, result.row(k)-(result.matrix[k][j]*myInverse(result.matrix[i][j]))*temp);
+                    scalar = result.matrix[k][j]*myInverse(result.matrix[i][j]);
+                    result.row(k, result.row(k)-scalar*temp);
+                    if(valid) Mirror->row(k, Mirror->row(k)-scalar*tempMir);
                 }
-                temp = myInverse(result.matrix[i][j])*temp;
+                scalar = myInverse(result.matrix[i][j]);
+                temp = scalar*temp;
+                if(valid) tempMir = scalar*tempMir; 
                 result.row(i,temp);
+                if(valid) Mirror->row(i,tempMir);
             }
             result.row(i, result.row(start));
             result.row(start, temp);
+            if(valid){
+                Mirror->row(i, Mirror->row(start));
+                Mirror->row(start, tempMir);
+            }
             start++;
         }
     }
@@ -299,16 +316,27 @@ Matrix<T> Matrix<T>::gauss_elimination(bool clear_null_lines, bool complete_gaus
 }
 
 template<typename T>
-Matrix<T> Matrix<T>::orthogonal_base(bool normalize) const{
+Matrix<T> Matrix<T>::inverse() const{
+    Matrix<T> Inverse(identity(numRows()));
+    gauss_elimination(false,true,nullptr,&Inverse);
+    return Inverse;
+}
+
+template<typename T>
+Matrix<T> Matrix<T>::gram_schmidt(size_t start, size_t end, bool normalize) const{
+    Matrix<T> result(*this);
+    result=result.transpose();
     Matrix<T> temp1(1,1,myZero());
     Matrix<T> temp2(1,1,myZero());
-    Matrix<T> result(this->transpose().gauss_elimination(true));
-    for(size_t i(0); i<result.numRows(); ++i){
+    Matrix<T> temp(1,1,myZero());
+    for(size_t i(start); i<end; ++i){
+        temp = result.row(i);
         for(size_t j(0); j<i; ++j){
             temp1 = result.row(i)*(~(result.row(j)));
             temp2 = result.row(j)*(~(result.row(j)));
-            result.row(i, result.row(i)-(temp1.matrix[0][0]*myInverse(temp2.matrix[0][0]))*result.row(j));
+            temp = temp - (temp1.matrix[0][0]*myInverse(temp2.matrix[0][0]))*result.row(j);
         }
+        result.row(i, temp);
         if(normalize){
             temp1 = result.row(i)*(~result.row(i));
             result.row(i, myInverse(mySqrt(temp1.matrix[0][0]))*result.row(i));
@@ -318,13 +346,25 @@ Matrix<T> Matrix<T>::orthogonal_base(bool normalize) const{
 }
 
 template<typename T>
+Matrix<T> Matrix<T>::gram_schmidt(bool normalize) const{
+    return gram_schmidt(0, numCols(), normalize);
+}
+
+template<typename T>
+Matrix<T> Matrix<T>::orthogonal_base(bool normalize) const{
+    Matrix<T> result(this->transpose().gauss_elimination(true).transpose().gram_schmidt(true));
+    return result;
+}
+
+template<typename T>
 T Matrix<T>::determinant() const{
-    if(numRows()!=numCols()) throw "Matrix must be square";
+    if(numRows()!=numCols()) throw std::invalid_argument("Matrix must be square");
     size_t n(numRows());
     T det(myZero());
+    Matrix<T> G(gauss_elimination());
     for(size_t i(0); i<n; ++i){
-        if(i==0) det=matrix[i][i];
-        else det = det*matrix[i][i];
+        if(i==0) det=G.matrix[i][i];
+        else det = det*G.matrix[i][i];
     }
     return det;
 }
@@ -362,6 +402,96 @@ Matrix<T> Matrix<T>::kernel() const{
 template<typename T>
 Matrix<T> Matrix<T>::image() const{
     return orthogonal_base(false);
+}
+
+template<typename T>
+Matrix<T> Matrix<T>::complete_base() const{
+    Matrix<T> K(transpose().kernel());
+    Matrix<T> result(*this);
+    result.addColumn(K);
+    Matrix<T> O(result.orthogonal_base(true));
+    for(size_t i(numRows()); i<result.numRows(); ++i){
+        result.row(i, O.row(i));
+    }
+    return result;
+}
+
+template<typename T>
+void Matrix<T>::QRD(Matrix<T>& Q, Matrix<T>& R) const{
+    //Add something if M=0
+    T norm(myZero());
+    std::vector<std::vector<T>> Rmatrix;
+    std::vector<T> coefs;
+    Matrix<T> temp(1,1,myZero());
+    Matrix<T> temp1(1,1,myZero());
+    Matrix<T> temp2(1,1,myZero());
+    T scalar(myZero());
+    Matrix<T> tempCol(1,1,myZero());
+    Matrix<T> nulvector(numRows(),1,myZero());
+    bool firstime(true);
+    size_t n(0);
+    for(size_t i(0); i<numCols(); ++i){
+        coefs={};
+        tempCol = column(i);
+        if(not firstime) n = Q.numCols();
+        for(size_t j(0); j<n; ++j){
+            temp1 = (column(i).transpose())*Q.column(j).conjugate();
+            temp2 = (Q.column(j).transpose())*Q.column(j).conjugate();
+            if(isZero(temp2.matrix[0][0])) scalar=myZero();
+            else scalar = temp1.matrix[0][0]*myInverse(temp2.matrix[0][0]);
+            tempCol = tempCol - scalar*Q.column(j);
+            coefs.push_back(scalar);
+        }
+        temp = (~tempCol)*tempCol;
+        norm=temp.matrix[0][0];
+        if(not isZero(norm)){
+            if(firstime){
+                Q=tempCol;
+                firstime=false;
+            }
+            else Q.addColumn(tempCol);
+            coefs.push_back(myUnit());
+            Rmatrix.push_back(coefs);
+        }
+        else{
+            if(firstime){
+                Q=nulvector;
+                firstime=false;
+            }
+            Q.addColumn(nulvector);
+            Rmatrix.push_back(coefs);
+        }
+    }
+    Matrix<T> tempR(Rmatrix);
+    R = tempR.transpose();
+    //normalizing
+    for(size_t k(0); k<Q.numCols(); ++k){
+        temp = (~Q.column(k))*Q.column(k);
+        norm = mySqrt(temp.matrix[0][0]);
+        if(not(isZero(norm))){
+            Q.column(k, myInverse(norm)*Q.column(k));
+            R.row(k, norm*R.row(k));
+        }
+    }
+    //squaring R
+    while(R.numRows()<R.numCols()){
+        R.addRow(nulvector.transpose());
+    }
+}
+
+template<typename T>
+Matrix<T> Matrix<T>::QR_algo() const{
+    if(numCols()!=numRows()) throw std::invalid_argument("Can't find eigenvalues of non-square matrix");
+    Matrix<T> Q(1,1,myZero());
+    Matrix<T> R(1,1,myZero());
+    Matrix<T> A(*this);
+    QRD(Q,R);
+    for(size_t i(0); i<50; ++i){
+        A=R*Q;
+        A.QRD(Q,R);
+    }
+    A=R*Q;
+    return A;
 }
 
 //External
