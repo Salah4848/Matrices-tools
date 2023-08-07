@@ -56,10 +56,11 @@ public:
     T determinant() const; //Requires gauss elimination
     Matrix kernel() const; //Returns matrix with columns that form a base for the kernel of M
     Matrix image() const; //Returns matrix forming base of Im(M)
-    Matrix complete_base() const; //Adds columns to M such that rank(M)=numcols
-    void QRD(Matrix& Q, Matrix& R) const; //Yields QR decomp of M, where is Q is unitary and R upper triangular
+    Matrix complete_base(bool orthonormal=false) const; //Adds columns to M such that rank(M)=numcols and new vectors are orthogonal to Im(M) (if orthonormal=true)
+    void QRD(Matrix& Q, Matrix& R) const; //Yields QR decomp of M, where Q is unitary and R upper triangular
     Matrix QR_algo() const; //Applies QR algorithm on M and returns final matrix
-    //Matrix SVD(Matrix& P, Matrix& Q) const; //returns the diagonal matrix D of singular values of M. Modifies P and Q such that : M=PDQ. Works only if orthonormal_base() works.
+    Matrix diagonal_base(std::vector<T>* spectre=nullptr) const; //returns diagonal base for Im(M)
+    Matrix SVD(Matrix& P, Matrix& Q) const; //returns the diagonal matrix D of singular values of M. Modifies P and Q such that : M=PDQ. Works only if orthonormal_base() works.
 
 };
 

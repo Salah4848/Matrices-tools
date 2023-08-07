@@ -405,10 +405,11 @@ Matrix<T> Matrix<T>::image() const{
 }
 
 template<typename T>
-Matrix<T> Matrix<T>::complete_base() const{
+Matrix<T> Matrix<T>::complete_base(bool orthonormal) const{
     Matrix<T> K(transpose().kernel());
     Matrix<T> result(*this);
     result.addColumn(K);
+    if(not(orthonormal)) return result;
     Matrix<T> O(result.orthogonal_base(true));
     for(size_t i(numRows()); i<result.numRows(); ++i){
         result.row(i, O.row(i));
@@ -492,6 +493,84 @@ Matrix<T> Matrix<T>::QR_algo() const{
     }
     A=R*Q;
     return A;
+}
+
+template<typename T>
+Matrix<T> Matrix<T>::diagonal_base(std::vector<T>* spectre) const{
+    Matrix<T> D(QR_algo());
+    Matrix<T> result(1,1,myZero());
+    std::vector<std::vector<T>> map;
+    bool dupe(false);
+    T temp;
+    for(size_t i(0); i<D.numCols(); ++i){
+        dupe=false;
+        temp = D.loc(i,i);
+        for(size_t l(0); l<map.size(); ++l){
+            if(isZero(map[l][0]-temp)){
+                map[l].push_back(temp);
+                dupe=true;
+                break;
+            }
+        }
+        if(not dupe){
+            map.push_back({temp});
+        }
+    }
+    size_t indexzero(0);
+    for(size_t i(0); i<map.size(); ++i){
+        if(not(isZero(map[i][0]))){
+            D = *this - map[i][0]*identity(numCols()); //using D as temporary
+            if(i==0){
+                result = D.kernel();
+            }
+            else{
+                result.addColumn(D.kernel());
+            }
+            if(spectre!=nullptr){
+                for(size_t j(0); j<map[i].size();  ++j){
+                    spectre->push_back(map[i][j]);
+                }
+            }
+        }
+        else indexzero=i;
+    }
+    //We add the eigen vectors associated to zero at the end.
+    D = *this - map[indexzero][0]*identity(numCols());
+    if(indexzero==0){
+        result = D.kernel();
+    }
+    else{
+        result.addColumn(D.kernel());
+    }
+    if(spectre!=nullptr){
+        for(size_t j(0); j<map[indexzero].size();  ++j){
+            spectre->push_back(map[indexzero][j]);
+        }
+    }
+    return result;
+}
+
+template<typename T>
+Matrix<T> Matrix<T>::SVD(Matrix<T>& P, Matrix<T>& Q) const{
+    std::vector<T> spectre;
+    Matrix<T> D(numRows(), numCols(), myZero());
+    Q = (~(*this)) * (*this);
+    Q = Q.diagonal_base(&spectre).orthogonal_base(true);
+    for(size_t i(0); i<spectre.size(); ++i){
+        if(not isZero(spectre[i])){
+            D.matrix[i][i]=mySqrt(spectre[i]);
+            if(i==0){
+                P = myInverse(mySqrt(spectre[i]))*((*this) * Q.column(i));
+            }
+            else{
+                P.addColumn(myInverse(mySqrt(spectre[i]))*((*this) * Q.column(i)));
+            }
+        }
+        else break;
+    }
+    P = P.complete_base(true);
+    Q = ~Q;
+    return D;
 }
 
 //External
